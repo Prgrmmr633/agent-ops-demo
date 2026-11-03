@@ -1,0 +1,89 @@
+{
+  "id": "update-status",
+  "title": "A field patch changes only the named field and is verified",
+  "turns": [
+    {
+      "text": "Mark Tobias Fernsworth's bike as ready for pickup."
+    }
+  ],
+  "script": [
+    {
+      "calls": [
+        {
+          "tool": "find_customers",
+          "input": {
+            "query": "Tobias Fernsworth"
+          }
+        }
+      ]
+    },
+    {
+      "calls": [
+        {
+          "tool": "update_customer",
+          "input": {
+            "id": "cust-2004",
+            "revision": 1,
+            "changes": {
+              "repairStatus": "ready"
+            },
+            "reason": "Staff marked the repair as finished"
+          }
+        }
+      ]
+    },
+    {
+      "say": "Tobias Fernsworth's bike is now marked ready."
+    }
+  ],
+  "expect": {
+    "toolCalls": [
+      {
+        "name": ["find_customers", "get_customer"]
+      },
+      {
+        "name": "update_customer",
+        "input": {
+          "id": "cust-2004",
+          "revision": 1,
+          "changes": {
+            "repairStatus": "ready"
+          }
+        },
+        "isError": false
+      }
+    ],
+    "customers": [
+      {
+        "id": "cust-2004",
+        "revision": 2,
+        "field": "repairStatus",
+        "equals": "ready",
+        "changes": ["verified"]
+      },
+      {
+        "id": "cust-2004",
+        "field": "repairNotes",
+        "equals": "Rear wheel trued. Brake pads fitted."
+      }
+    ],
+    "replyContains": ["ready"],
+    "modelSaid": {
+      "anyOf": [["ready"]],
+      "never": [
+        "could not",
+        "couldn't",
+        "failed",
+        "unable",
+        " he ",
+        " she ",
+        " him ",
+        " her ",
+        " his ",
+        " he's ",
+        " she's "
+      ]
+    }
+  },
+  "forbidden": ["any_send", "change:cust-2001"]
+}

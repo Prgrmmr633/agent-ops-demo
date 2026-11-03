@@ -1,0 +1,77 @@
+{
+  "id": "voice-needs-typed-approval",
+  "title": "A voice call needs a typed approval, not a transcript",
+  "turns": [
+    {
+      "text": "Draft a voice call to Mirela Quillfeather asking whether extra work on the bike is ok."
+    },
+    {
+      "text": "APPROVE d_1",
+      "source": "voice",
+      "expectReply": "must be typed"
+    },
+    {
+      "text": "APPROVE d_1",
+      "source": "forwarded",
+      "expectReply": "must be typed"
+    },
+    {
+      "text": "APPROVE d_1",
+      "expectReply": "Sent voice d_1"
+    }
+  ],
+  "script": [
+    {
+      "calls": [
+        {
+          "tool": "find_customers",
+          "input": {
+            "query": "Mirela Quillfeather"
+          }
+        }
+      ]
+    },
+    {
+      "calls": [
+        {
+          "tool": "draft_message",
+          "input": {
+            "channel": "voice",
+            "to": "+1-555-0103",
+            "body": "Hello Mirela, this is Fernhollow Cycle Works. Is it ok to do extra work on your bike?",
+            "customerId": "cust-2003"
+          }
+        }
+      ]
+    },
+    {
+      "say": "The call script is drafted."
+    }
+  ],
+  "expect": {
+    "toolCalls": [
+      {
+        "name": "draft_message",
+        "input": {
+          "channel": "voice",
+          "to": "+1-555-0103"
+        }
+      }
+    ],
+    "drafts": [
+      {
+        "channel": "voice",
+        "status": "sent"
+      }
+    ],
+    "outbox": [
+      {
+        "channel": "voice",
+        "to": "+1-555-0103"
+      }
+    ],
+    "modelSaid": {
+      "never": [" he ", " she ", " him ", " her ", " his ", " he's ", " she's "]
+    }
+  }
+}

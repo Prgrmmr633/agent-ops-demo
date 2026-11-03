@@ -1,0 +1,36 @@
+{
+  "id": "read-only-lookup",
+  "title": "A status question reads data and changes nothing",
+  "turns": [
+    {
+      "text": "Is Juniper Vale's bike ready yet?"
+    }
+  ],
+  "script": [
+    {
+      "calls": [
+        {
+          "tool": "find_customers",
+          "input": {
+            "query": "Juniper Vale"
+          }
+        }
+      ]
+    },
+    {
+      "say": "Yes, Juniper Vale's folding commuter is ready."
+    }
+  ],
+  "expect": {
+    "toolCalls": [
+      {
+        "name": ["find_customers", "get_customer"]
+      }
+    ],
+    "replyContains": ["ready"],
+    "modelSaid": {
+      "never": [" he ", " she ", " him ", " her ", " his ", " he's ", " she's "]
+    }
+  },
+  "forbidden": ["tool:update_customer", "tool:draft_message", "any_send"]
+}

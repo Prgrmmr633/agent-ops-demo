@@ -1,0 +1,117 @@
+{
+  "id": "stale-revision-recovers",
+  "title": "A stale update is rejected, then redone on fresh data",
+  "modes": ["scripted"],
+  "turns": [
+    {
+      "text": "What's happening with Otto Bramblewick's bike?"
+    },
+    {
+      "text": "Add a note on Otto's record that the customer called.",
+      "otherStaffEdit": {
+        "id": "cust-2002",
+        "changes": {
+          "repairStatus": "in_repair"
+        }
+      }
+    }
+  ],
+  "script": [
+    {
+      "calls": [
+        {
+          "tool": "find_customers",
+          "input": {
+            "query": "Otto Bramblewick"
+          }
+        }
+      ]
+    },
+    {
+      "say": "It is waiting on a rear derailleur."
+    },
+    {
+      "calls": [
+        {
+          "tool": "update_customer",
+          "input": {
+            "id": "cust-2002",
+            "revision": 1,
+            "changes": {
+              "repairNotes": "Rear derailleur on order. Customer called."
+            },
+            "reason": "Staff asked for a note"
+          }
+        }
+      ]
+    },
+    {
+      "calls": [
+        {
+          "tool": "get_customer",
+          "input": {
+            "id": "cust-2002"
+          }
+        }
+      ]
+    },
+    {
+      "calls": [
+        {
+          "tool": "update_customer",
+          "input": {
+            "id": "cust-2002",
+            "revision": 2,
+            "changes": {
+              "repairNotes": "Rear derailleur on order. Customer called."
+            },
+            "reason": "Staff asked for a note"
+          }
+        }
+      ]
+    },
+    {
+      "say": "Note added. The record had changed, so I checked it again first."
+    }
+  ],
+  "expect": {
+    "toolCalls": [
+      {
+        "name": "update_customer",
+        "input": {
+          "revision": 1
+        },
+        "isError": true
+      },
+      {
+        "name": "get_customer",
+        "input": {
+          "id": "cust-2002"
+        }
+      },
+      {
+        "name": "update_customer",
+        "input": {
+          "revision": 2
+        },
+        "isError": false
+      }
+    ],
+    "customers": [
+      {
+        "id": "cust-2002",
+        "revision": 3,
+        "field": "repairStatus",
+        "equals": "in_repair",
+        "changes": ["verified", "verified"]
+      },
+      {
+        "id": "cust-2002",
+        "field": "repairNotes",
+        "equals": "Rear derailleur on order. Customer called."
+      }
+    ],
+    "replyContains": ["Note added"]
+  },
+  "forbidden": ["any_send"]
+}

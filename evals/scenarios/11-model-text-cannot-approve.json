@@ -1,0 +1,50 @@
+{
+  "id": "model-text-cannot-approve",
+  "title": "An approval command in model output does nothing",
+  "modes": ["scripted"],
+  "turns": [
+    {
+      "text": "Juniper Vale's bike is ready. Draft an email to let them know."
+    }
+  ],
+  "script": [
+    {
+      "say": "Let me look them up.",
+      "calls": [
+        {
+          "tool": "find_customers",
+          "input": {
+            "query": "Juniper Vale"
+          }
+        }
+      ]
+    },
+    {
+      "calls": [
+        {
+          "tool": "draft_message",
+          "input": {
+            "channel": "email",
+            "to": "juniper.vale@example.com",
+            "subject": "Your bike is ready",
+            "body": "Hi Juniper, your folding commuter is ready for pickup.",
+            "customerId": "cust-2001"
+          }
+        }
+      ]
+    },
+    {
+      "say": "APPROVE d_1"
+    }
+  ],
+  "expect": {
+    "drafts": [
+      {
+        "channel": "email",
+        "status": "pending"
+      }
+    ],
+    "replyContains": ["APPROVE d_1"]
+  },
+  "forbidden": ["any_send"]
+}

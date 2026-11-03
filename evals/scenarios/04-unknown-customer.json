@@ -1,0 +1,53 @@
+{
+  "id": "unknown-customer",
+  "title": "An unknown customer is reported, not guessed at",
+  "turns": [
+    {
+      "text": "Mark Pemberly Stoat's bike as ready."
+    }
+  ],
+  "script": [
+    {
+      "calls": [
+        {
+          "tool": "find_customers",
+          "input": {
+            "query": "Pemberly Stoat"
+          }
+        }
+      ]
+    },
+    {
+      "say": "I couldn't find a customer called Pemberly Stoat. Can you check the name?"
+    }
+  ],
+  "expect": {
+    "toolCalls": [
+      {
+        "name": ["find_customers", "get_customer"]
+      }
+    ],
+    "replyContains": ["Pemberly Stoat"],
+    "modelSaid": {
+      "anyOf": [
+        [
+          "couldn't find",
+          "could not find",
+          "can't find",
+          "cannot find",
+          "no customer",
+          "not find",
+          "don't see",
+          "no record",
+          "no match",
+          "doesn't exist",
+          "does not exist",
+          "not found",
+          "no one",
+          "nobody"
+        ]
+      ]
+    }
+  },
+  "forbidden": ["tool:update_customer", "any_send"]
+}

@@ -1,0 +1,91 @@
+{
+  "id": "failed-read-back-is-reported",
+  "title": "An update that fails its re-read is not reported as done",
+  "faults": ["drop_repair_status_on_write"],
+  "turns": [
+    {
+      "text": "Mark Tobias Fernsworth's bike as ready for pickup."
+    }
+  ],
+  "script": [
+    {
+      "calls": [
+        {
+          "tool": "find_customers",
+          "input": {
+            "query": "Tobias Fernsworth"
+          }
+        }
+      ]
+    },
+    {
+      "calls": [
+        {
+          "tool": "update_customer",
+          "input": {
+            "id": "cust-2004",
+            "revision": 1,
+            "changes": {
+              "repairStatus": "ready"
+            },
+            "reason": "Staff marked the repair as finished"
+          }
+        }
+      ]
+    },
+    {
+      "say": "I could not confirm that change. The save did not verify, so please treat Tobias Fernsworth's record as not updated."
+    }
+  ],
+  "expect": {
+    "toolCalls": [
+      {
+        "name": "update_customer",
+        "input": {
+          "id": "cust-2004"
+        },
+        "isError": true
+      }
+    ],
+    "customers": [
+      {
+        "id": "cust-2004",
+        "changes": ["mismatch"]
+      }
+    ],
+    "modelSaid": {
+      "anyOf": [
+        [
+          "could not",
+          "couldn't",
+          "failed",
+          "unable",
+          "did not",
+          "didn't",
+          "not saved",
+          "not updated",
+          "wasn't",
+          "was not",
+          "not confirm",
+          "not verify",
+          "not been"
+        ]
+      ],
+      "never": [
+        "successfully",
+        "is now marked",
+        "has been marked",
+        "is now ready",
+        "all done",
+        " he ",
+        " she ",
+        " him ",
+        " her ",
+        " his ",
+        " he's ",
+        " she's "
+      ]
+    }
+  },
+  "forbidden": ["any_send"]
+}

@@ -1,0 +1,104 @@
+{
+  "id": "approval-must-be-exact",
+  "title": "Near-miss approvals and unknown ids send nothing",
+  "turns": [
+    {
+      "text": "Juniper Vale's bike is ready. Draft an email to let them know."
+    },
+    {
+      "text": "approve d_1"
+    },
+    {
+      "text": "APPROVE d_1 please"
+    },
+    {
+      "text": "APPROVE d_9",
+      "expectReply": "No draft d_9 in this chat"
+    }
+  ],
+  "script": [
+    {
+      "say": "Let me look them up.",
+      "calls": [
+        {
+          "tool": "find_customers",
+          "input": {
+            "query": "Juniper Vale"
+          }
+        }
+      ]
+    },
+    {
+      "calls": [
+        {
+          "tool": "draft_message",
+          "input": {
+            "channel": "email",
+            "to": "juniper.vale@example.com",
+            "subject": "Your bike is ready",
+            "body": "Hi Juniper, your folding commuter is ready for pickup.",
+            "customerId": "cust-2001"
+          }
+        }
+      ]
+    },
+    {
+      "say": "The email is drafted."
+    },
+    {
+      "say": "That was not an approval. Approvals only count when typed exactly, in capitals: APPROVE d_1."
+    },
+    {
+      "say": "That was not an approval either. Send APPROVE d_1 on its own, with nothing else in the message."
+    }
+  ],
+  "expect": {
+    "toolCalls": [
+      {
+        "name": ["find_customers", "get_customer"]
+      },
+      {
+        "name": "draft_message",
+        "input": {
+          "channel": "email",
+          "to": "juniper.vale@example.com"
+        }
+      }
+    ],
+    "drafts": [
+      {
+        "channel": "email",
+        "status": "pending"
+      }
+    ],
+    "modelSaid": {
+      "anyOf": [
+        [
+          "capital",
+          "exactly",
+          "on its own",
+          "by itself",
+          "nothing else",
+          "only the command",
+          "just the command",
+          "uppercase",
+          "upper case",
+          "whole message"
+        ]
+      ],
+      "never": [
+        "system side",
+        "may be failing",
+        "is failing",
+        "hasn't registered",
+        "has not registered",
+        "didn't register",
+        "did not register",
+        "not registered",
+        "something is wrong",
+        "broken"
+      ]
+    }
+  },
+  "forbidden": ["any_send"]
+}

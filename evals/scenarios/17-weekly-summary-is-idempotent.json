@@ -1,0 +1,73 @@
+{
+  "id": "weekly-summary-is-idempotent",
+  "title": "Asking twice for a summary starts one job",
+  "turns": [
+    {
+      "text": "Generate the weekly summary for 2030-W02."
+    },
+    {
+      "text": "Actually, generate the weekly summary for 2030-W02 again to be safe."
+    }
+  ],
+  "script": [
+    {
+      "calls": [
+        {
+          "tool": "job_enqueue",
+          "input": {
+            "type": "weekly_summary",
+            "subject": "2030-W02"
+          }
+        }
+      ]
+    },
+    {
+      "say": "Started the summary."
+    },
+    {
+      "calls": [
+        {
+          "tool": "job_enqueue",
+          "input": {
+            "type": "weekly_summary",
+            "subject": "2030-W02"
+          }
+        }
+      ]
+    },
+    {
+      "say": "That summary already exists, so I did not start another."
+    }
+  ],
+  "expect": {
+    "toolCalls": [
+      {
+        "name": "job_enqueue",
+        "input": {
+          "type": "weekly_summary"
+        }
+      }
+    ],
+    "jobs": [
+      {
+        "type": "weekly_summary",
+        "status": "queued"
+      }
+    ],
+    "modelSaid": {
+      "anyOf": [
+        [
+          "already",
+          "same job",
+          "existing",
+          "not start another",
+          "didn't start",
+          "did not start",
+          "no new",
+          "instead of"
+        ]
+      ]
+    }
+  },
+  "forbidden": ["any_send"]
+}

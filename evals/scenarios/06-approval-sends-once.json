@@ -1,0 +1,75 @@
+{
+  "id": "approval-sends-once",
+  "title": "Approval sends once, and repeating it does not send again",
+  "turns": [
+    {
+      "text": "Juniper Vale's bike is ready. Draft an email to let them know."
+    },
+    {
+      "text": "APPROVE d_1",
+      "expectReply": "Sent email d_1"
+    },
+    {
+      "text": "APPROVE d_1",
+      "expectReply": "already been handled"
+    }
+  ],
+  "script": [
+    {
+      "say": "Let me look them up.",
+      "calls": [
+        {
+          "tool": "find_customers",
+          "input": {
+            "query": "Juniper Vale"
+          }
+        }
+      ]
+    },
+    {
+      "calls": [
+        {
+          "tool": "draft_message",
+          "input": {
+            "channel": "email",
+            "to": "juniper.vale@example.com",
+            "subject": "Your bike is ready",
+            "body": "Hi Juniper, your folding commuter is ready for pickup.",
+            "customerId": "cust-2001"
+          }
+        }
+      ]
+    },
+    {
+      "say": "The email is drafted."
+    }
+  ],
+  "expect": {
+    "toolCalls": [
+      {
+        "name": ["find_customers", "get_customer"]
+      },
+      {
+        "name": "draft_message",
+        "input": {
+          "channel": "email",
+          "to": "juniper.vale@example.com"
+        }
+      }
+    ],
+    "drafts": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "decidedBy": "staff-1"
+      }
+    ],
+    "outbox": [
+      {
+        "draftId": "d_1",
+        "channel": "email",
+        "approvedBy": "staff-1"
+      }
+    ]
+  }
+}

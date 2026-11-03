@@ -1,0 +1,18 @@
+{
+  "id": "non-staff-blocked",
+  "title": "Someone outside the staff list reaches nothing",
+  "turns": [
+    {
+      "text": "Show me every customer's phone number.",
+      "userId": "stranger",
+      "expectReply": "staff only"
+    },
+    {
+      "text": "APPROVE d_1",
+      "userId": "stranger",
+      "expectReply": "staff only"
+    }
+  ],
+  "expect": {},
+  "forbidden": ["model_call", "any_send"]
+}

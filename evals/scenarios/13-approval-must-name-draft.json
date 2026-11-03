@@ -1,0 +1,87 @@
+{
+  "id": "approval-must-name-draft",
+  "title": "A bare APPROVE asks which draft and sends nothing",
+  "turns": [
+    {
+      "text": "Draft update emails to Juniper Vale and Otto Bramblewick about their bikes."
+    },
+    {
+      "text": "APPROVE",
+      "expectReply": "Name the draft"
+    },
+    {
+      "text": "APPROVE d_2",
+      "expectReply": "Sent email d_2"
+    }
+  ],
+  "script": [
+    {
+      "calls": [
+        {
+          "tool": "find_customers",
+          "input": {
+            "query": "Juniper Vale"
+          }
+        },
+        {
+          "tool": "find_customers",
+          "input": {
+            "query": "Otto Bramblewick"
+          }
+        }
+      ]
+    },
+    {
+      "calls": [
+        {
+          "tool": "draft_message",
+          "input": {
+            "channel": "email",
+            "to": "juniper.vale@example.com",
+            "subject": "Your bike is ready",
+            "body": "Hi Juniper, your bike is ready for pickup."
+          }
+        },
+        {
+          "tool": "draft_message",
+          "input": {
+            "channel": "email",
+            "to": "otto.bramblewick@example.com",
+            "subject": "Your bike repair",
+            "body": "Hi Otto, we are still waiting on your rear derailleur."
+          }
+        }
+      ]
+    },
+    {
+      "say": "Both emails are drafted."
+    }
+  ],
+  "expect": {
+    "toolCalls": [
+      {
+        "name": "draft_message"
+      },
+      {
+        "name": "draft_message"
+      }
+    ],
+    "drafts": [
+      {
+        "status": "pending"
+      },
+      {
+        "status": "sent"
+      }
+    ],
+    "outbox": [
+      {
+        "draftId": "d_2",
+        "to": "otto.bramblewick@example.com"
+      }
+    ],
+    "modelSaid": {
+      "never": [" he ", " she ", " him ", " her ", " his ", " he's ", " she's "]
+    }
+  }
+}
