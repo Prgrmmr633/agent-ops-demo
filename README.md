@@ -85,6 +85,8 @@ npm run start:worker
 npm run start:agent
 ```
 
+With `VOICE_ENABLED=true` and an ElevenLabs key, a voice note gets a voice note back, so a voice chat feels like a call, and typed text still gets text. Drafts and their `APPROVE` commands always follow as text, so staff read exactly what would be sent and approve by typing. The bot also works in a Telegram group with topics: it replies in the topic the message came from, and each topic is its own conversation, so a "Chat" topic and a "Call" topic never mix. For a group, turn off the bot's privacy mode in BotFather so it can read normal messages.
+
 To inspect and recover failed jobs:
 
 ```bash
@@ -236,6 +238,8 @@ The recorded scripted run is in [`docs/eval-report.json`](docs/eval-report.json)
 
 **Conversation history holds what was said, not tool traffic.** Current state always comes from a fresh tool call, so old results cannot go stale in context. The cost is that the model has to look things up again.
 
+**Spoken replies speak only the agent's own words.** Draft previews are left out of the audio, because a person should read a message before approving it, not hear it. Long replies and failed speech fall back to text, so voice is never the only way an answer arrives.
+
 **No build step.** Node 26 runs the TypeScript directly and SQLite is built in, so there is no native compile and less to go wrong on a clean clone. The cost is requiring a recent Node.
 
 ## Known limits
@@ -263,6 +267,7 @@ Everything below was run on Node 26 on macOS unless noted. The Docker checks ran
 | `docker compose up` and the image build             | Passed: seed, MCP calls between containers, jobs, recovery, health, restart                                                                                                                         |
 | Live evaluation against a real model                | Passed on Sonnet 5.5, the default model: 14 of 14 live scenarios, 239 of 239 checks, including wording, plain text and pronoun checks. See `docs/eval-report.live.json`. Other models not run.      |
 | Real Telegram connection                            | Passed: a live chat with the running agent, including a draft, a casual yes and a lowercase approve that sent nothing, one exact approval that sent once, and a voice note transcribed and acted on |
+| Voice replies and group topics in Telegram          | Unit tests pass with a fake Telegram API and fake voice. Not yet run against real Telegram.                                                                                                         |
 | Real ElevenLabs calls                               | Passed: text to speech and speech to text round trip, with a key limited to those two endpoints                                                                                                     |
 | GitHub Actions workflow                             | Passed on GitHub's hosted Linux runner: install, lint, typecheck, tests and the scripted evaluation                                                                                                 |
 

@@ -1,21 +1,28 @@
 import type { Update, UserFromGetMe } from 'grammy/types';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Inbound, RouterResult, StaffRouter } from '../../src/agent/router.ts';
 import { createBot, splitForTelegram } from '../../src/agent/telegram.ts';
 import { FakeVoice } from '../fake-voice.ts';
 
 const botInfo = { id: 1, is_bot: true, first_name: 'Test bot' } as UserFromGetMe;
 
+interface ApiCall {
+  method: string;
+  payload: Record<string, unknown>;
+}
+
 function setup(handle: (inbound: Inbound) => Promise<RouterResult>, voice?: FakeVoice) {
   const router = { handle: vi.fn(handle) } as unknown as StaffRouter;
   const bot = createBot({ token: 'test-token', router, voice, botInfo });
-  const sent: string[] = [];
+  const calls: ApiCall[] = [];
   bot.api.config.use(async (_prev, method, payload) => {
-    if (method === 'sendMessage') sent.push((payload as { text: string }).text);
+    calls.push({ method, payload: payload as Record<string, unknown> });
     const result = method === 'getFile' ? { file_id: 'f1', file_path: 'voice/1.oga' } : true;
     return { ok: true, result } as never;
   });
-  return { bot, sent, router };
+  const sent = () =>
+    calls.filter(({ method }) => method === 'sendMessage').map(({ payload }) => payload.text);
+  return { bot, calls, sent, router };
 }
 
 function textUpdate(text: string, extra: Record<string, unknown> = {}): Update {
@@ -32,6 +39,28 @@ function textUpdate(text: string, extra: Record<string, unknown> = {}): Update {
   } as Update;
 }
 
+function voiceUpdate(extra: Record<string, unknown> = {}): Update {
+  const { message } = textUpdate('') as unknown as { message: Record<string, unknown> };
+  const { text: _text, ...rest } = message;
+  const voice = { file_id: 'f1', file_unique_id: 'u1', duration: 2 };
+  return { update_id: 1, message: { ...rest, voice, ...extra } } as unknown as Update;
+}
+
+// A message posted inside a forum topic of a group.
+const inTopic = (thread: number) => ({
+  chat: { id: -1001, type: 'supergroup', title: 'Team', is_forum: true },
+  is_topic_message: true,
+  message_thread_id: thread,
+});
+
+const agentResult = (modelReply: string, previews = ''): RouterResult => ({
+  kind: 'agent',
+  modelReply,
+  reply: previews ? `${modelReply}\n\n${previews}` : modelReply,
+  toolCalls: [],
+  drafts: [],
+});
+
 describe('Telegram bot', () => {
   it('passes typed text to the router and replies', async () => {
     const { bot, sent, router } = setup(async () => ({ kind: 'refused', reply: 'Hello back' }));
@@ -44,7 +73,7 @@ describe('Telegram bot', () => {
       text: 'hello',
       source: 'typed',
     });
-    expect(sent).toEqual(['Hello back']);
+    expect(sent()).toEqual(['Hello back']);
   });
 
   it('marks forwarded messages so that they cannot approve', async () => {
@@ -76,8 +105,8 @@ describe('Telegram bot', () => {
 
     await bot.handleUpdate(textUpdate('hello'));
 
-    expect(sent).toHaveLength(1);
-    expect(sent[0]).not.toContain('internal detail');
+    expect(sent()).toHaveLength(1);
+    expect(sent()[0]).not.toContain('internal detail');
     quiet.mockRestore();
   });
 
@@ -86,22 +115,41 @@ describe('Telegram bot', () => {
 
     await bot.handleUpdate(textUpdate('hello'));
 
-    expect(sent.map((text) => text.length)).toEqual([4096, 904]);
+    expect(sent().map((text) => String(text).length)).toEqual([4096, 904]);
+  });
+});
+
+describe('forum topics', () => {
+  it('treats each topic as its own conversation', async () => {
+    const { bot, router } = setup(async () => ({ kind: 'refused', reply: 'Ok' }));
+
+    await bot.handleUpdate(textUpdate('in chat', inTopic(11)));
+    await bot.handleUpdate(textUpdate('in call', inTopic(22)));
+
+    const ids = vi.mocked(router.handle).mock.calls.map(([inbound]) => inbound.chatId);
+    expect(ids).toEqual(['-1001:11', '-1001:22']);
+  });
+
+  it('replies in the topic the message came from', async () => {
+    const { bot, calls } = setup(async () => ({ kind: 'refused', reply: 'Ok' }));
+
+    await bot.handleUpdate(textUpdate('hello', inTopic(11)));
+
+    expect(calls.find(({ method }) => method === 'sendMessage')?.payload).toMatchObject({
+      message_thread_id: 11,
+      text: 'Ok',
+    });
   });
 });
 
 describe('voice notes', () => {
-  const voiceUpdate = () => {
-    const { message } = textUpdate('') as unknown as { message: Record<string, unknown> };
-    const { text: _text, ...rest } = message;
-    const voice = { file_id: 'f1', file_unique_id: 'u1', duration: 2 };
-    return { update_id: 1, message: { ...rest, voice } } as unknown as Update;
-  };
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(new Uint8Array([1]))));
+  });
 
   afterEach(() => vi.unstubAllGlobals());
 
   it('transcribes a voice note and marks it as voice', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(new Uint8Array([1]))));
     const { bot, router } = setup(
       async () => ({ kind: 'refused', reply: 'Ok' }),
       new FakeVoice('APPROVE d_1'),
@@ -112,6 +160,85 @@ describe('voice notes', () => {
     expect(router.handle).toHaveBeenCalledWith(
       expect.objectContaining({ text: 'APPROVE d_1', source: 'voice' }),
     );
+  });
+
+  it('answers a voice note with a voice note of the agent’s own words', async () => {
+    const voice = new FakeVoice();
+    const { bot, calls, sent } = setup(async () => agentResult('Juniper’s bike is ready.'), voice);
+
+    await bot.handleUpdate(voiceUpdate());
+
+    expect(voice.spoken).toEqual(['Juniper’s bike is ready.']);
+    expect(voice.formats).toEqual(['voice_note']);
+    expect(calls.map(({ method }) => method)).toContain('sendVoice');
+    expect(sent()).toEqual([]);
+  });
+
+  it('keeps drafts and their commands as text after the spoken reply', async () => {
+    const voice = new FakeVoice();
+    const preview = 'Draft d_1 (email) to someone@example.com\nNothing has been sent.';
+    const { bot, calls, sent } = setup(async () => agentResult('I drafted it.', preview), voice);
+
+    await bot.handleUpdate(voiceUpdate());
+
+    expect(voice.spoken).toEqual(['I drafted it.']);
+    const methods = calls.map(({ method }) => method).filter((m) => m !== 'getFile');
+    expect(methods).toEqual(['sendVoice', 'sendMessage']);
+    expect(sent()).toEqual([preview]);
+  });
+
+  it('speaks a refusal too, so a spoken approval is answered aloud and sends nothing', async () => {
+    const voice = new FakeVoice('APPROVE d_1');
+    const refusal = 'Approvals must be typed by staff in this chat.';
+    const { bot } = setup(async () => ({ kind: 'refused', reply: refusal }), voice);
+
+    await bot.handleUpdate(voiceUpdate());
+
+    expect(voice.spoken).toEqual([refusal]);
+  });
+
+  it('replies in the same topic when answering by voice', async () => {
+    const { bot, calls } = setup(async () => agentResult('Done.'), new FakeVoice());
+
+    await bot.handleUpdate(voiceUpdate(inTopic(22)));
+
+    expect(calls.find(({ method }) => method === 'sendVoice')?.payload).toMatchObject({
+      message_thread_id: 22,
+    });
+  });
+
+  it('falls back to text when speech fails', async () => {
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const voice = new FakeVoice();
+    vi.spyOn(voice, 'synthesize').mockRejectedValue(new Error('provider down'));
+    const { bot, calls, sent } = setup(async () => agentResult('Done.'), voice);
+
+    await bot.handleUpdate(voiceUpdate());
+
+    expect(calls.map(({ method }) => method)).not.toContain('sendVoice');
+    expect(sent()).toEqual(['Done.']);
+    quiet.mockRestore();
+  });
+
+  it('sends a very long reply as text instead of speaking it', async () => {
+    const voice = new FakeVoice();
+    const long = 'word '.repeat(300).trim();
+    const { bot, sent } = setup(async () => agentResult(long), voice);
+
+    await bot.handleUpdate(voiceUpdate());
+
+    expect(voice.spoken).toEqual([]);
+    expect(sent()).toEqual([long]);
+  });
+
+  it('answers typed text with text, even when voice is on', async () => {
+    const voice = new FakeVoice();
+    const { bot, sent } = setup(async () => agentResult('Typed answer.'), voice);
+
+    await bot.handleUpdate(textUpdate('hello'));
+
+    expect(voice.spoken).toEqual([]);
+    expect(sent()).toEqual(['Typed answer.']);
   });
 
   it('asks staff to type when a voice note cannot be read', async () => {
@@ -125,7 +252,7 @@ describe('voice notes', () => {
     await bot.handleUpdate(voiceUpdate());
 
     expect(router.handle).not.toHaveBeenCalled();
-    expect(sent[0]).toContain('type it instead');
+    expect(sent()[0]).toContain('type it instead');
     quiet.mockRestore();
   });
 

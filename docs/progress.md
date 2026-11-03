@@ -141,6 +141,13 @@
 - Passed: a customer lookup, then a drafted email shown in full with its id. A casual "yes, send it" and a lowercase `approve` were refused with the exact command to type. The exact `APPROVE` sent once, to the local outbox, and repeating it sent nothing. A voice note was transcribed and the agent marked that customer's bike ready.
 - Checked in the databases, not just the replies: exactly one outbox message, approved by staff. The customer record moved one revision with only the requested field changed, its change record verified, and no other customer changed. No errors in any service log.
 
+## Step 22: voice replies and group topics
+
+- Added: a voice note now gets a spoken reply as a Telegram voice note (Ogg Opus from ElevenLabs), and typed text still gets text. Only the agent's own words are spoken. Draft previews and their commands follow as text, and long replies or failed speech fall back to text.
+- Added: in a Telegram group with topics, replies stay in the topic the message came from, and each topic is its own conversation.
+- Passed: lint, typecheck, 315 tests, and 17 of 17 scripted scenarios (273 checks).
+- Not yet run: a real Telegram group with "Chat" and "Call" topics.
+
 ## Next
 
 - Run the live evaluation a few more times to see how consistent the model is.

@@ -1,8 +1,12 @@
 import { z } from 'zod';
-import type { VoiceAdapter } from './adapter.ts';
+import type { AudioFormat, VoiceAdapter } from './adapter.ts';
 
 const API_ROOT = 'https://api.elevenlabs.io/v1';
 const REQUEST_TIMEOUT_MS = 60_000;
+const OUTPUT_FORMAT: Record<AudioFormat, string> = {
+  mp3: 'mp3_44100_128',
+  voice_note: 'opus_48000_64',
+};
 
 export interface ElevenLabsOptions {
   apiKey: string;
@@ -24,12 +28,15 @@ export class ElevenLabsVoice implements VoiceAdapter {
     this.fetch = options.fetch ?? globalThis.fetch;
   }
 
-  async synthesize(text: string): Promise<Uint8Array> {
+  async synthesize(text: string, format: AudioFormat = 'mp3'): Promise<Uint8Array> {
     const { voiceId, ttsModel } = this.options;
-    const response = await this.request(`/text-to-speech/${encodeURIComponent(voiceId)}`, {
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ text, ...(ttsModel ? { model_id: ttsModel } : {}) }),
-    });
+    const response = await this.request(
+      `/text-to-speech/${encodeURIComponent(voiceId)}?output_format=${OUTPUT_FORMAT[format]}`,
+      {
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text, ...(ttsModel ? { model_id: ttsModel } : {}) }),
+      },
+    );
     return new Uint8Array(await response.arrayBuffer());
   }
 

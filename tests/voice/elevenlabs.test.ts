@@ -20,11 +20,23 @@ describe('ElevenLabsVoice', () => {
     const audio = await voice.synthesize('Hello');
 
     const { url, init } = lastCall(fetchStub);
-    expect(url).toBe('https://api.elevenlabs.io/v1/text-to-speech/voice%2F1');
+    expect(url).toBe(
+      'https://api.elevenlabs.io/v1/text-to-speech/voice%2F1?output_format=mp3_44100_128',
+    );
     expect(init?.method).toBe('POST');
     expect(init?.headers).toMatchObject({ 'xi-api-key': 'test-key-not-real' });
     expect(JSON.parse(String(init?.body))).toEqual({ text: 'Hello', model_id: 'tts-model' });
     expect([...audio]).toEqual([1, 2, 3]);
+  });
+
+  it('asks for Ogg Opus when a voice note is wanted', async () => {
+    const fetchStub = stub(new Response(new Uint8Array([79, 103, 103, 83])));
+
+    await new ElevenLabsVoice({ ...options, fetch: fetchStub }).synthesize('Hello', 'voice_note');
+
+    expect(lastCall(fetchStub).url).toBe(
+      'https://api.elevenlabs.io/v1/text-to-speech/voice%2F1?output_format=opus_48000_64',
+    );
   });
 
   it('leaves the model out when none is configured', async () => {
