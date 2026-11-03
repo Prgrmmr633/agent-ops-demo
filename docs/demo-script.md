@@ -38,3 +38,7 @@ The `--slow` flag pauses 8 seconds after each of the 7 sections, which comes to 
 ## Optional closing shot
 
 If you have a few seconds spare, run `npm run eval` to show the pass/fail table.
+
+## Telegram version
+
+For a recording in Telegram with the live agent, including voice notes, see [demo-telegram.md](demo-telegram.md).
