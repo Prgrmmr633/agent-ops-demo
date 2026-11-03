@@ -240,7 +240,7 @@ The recorded scripted run is in [`docs/eval-report.json`](docs/eval-report.json)
 
 **Conversation history holds what was said, not tool traffic.** Current state always comes from a fresh tool call, so old results cannot go stale in context. The cost is that the model has to look things up again.
 
-**Spoken replies speak only the agent's own words.** Draft previews are left out of the audio, because a person should read a message before approving it, not hear it. Long replies and failed speech fall back to text, so voice is never the only way an answer arrives.
+**Spoken replies speak only the agent's own words.** Draft previews are left out of the audio, because a person should read a message before approving it, not hear it. Ids, approval commands, phone numbers and email addresses are not read aloud either, because they are hard to follow by ear and staff need them exact. When any are left out, the whole reply follows in writing. Long replies and failed speech fall back to text, so voice is never the only way an answer arrives.
 
 **No build step.** Node 26 runs the TypeScript directly and SQLite is built in, so there is no native compile and less to go wrong on a clean clone. The cost is requiring a recent Node.
 

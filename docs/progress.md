@@ -155,6 +155,12 @@
 - Checked in the databases after recording: both drafts were sent exactly once, to the local outbox only, and the one customer change was verified. No errors in any service log.
 - Changed: the spoken lines in the script are plainer, and the voice step uses only the customer's first name, because speech recognition misheard the surname.
 
+## Step 24: cleaner spoken replies
+
+- Changed: spoken replies no longer read out draft ids, approval commands, phone numbers or email addresses. In the demo, the voice reply read a draft id and a phone number aloud, which was hard to follow. Sentences built around an id or a command are dropped from the audio, and contact details are taken out of the rest. When anything is left out, the voice note says the details are below, and the whole reply follows in writing.
+- Passed: lint, typecheck, 325 tests, and 17 of 17 scripted scenarios (273 checks). Run against the two voice replies from the demo, the filter kept the first unchanged and removed the phone number and approval commands from the second.
+- Not yet run: a live voice note with this change.
+
 ## Next
 
 - Run the live evaluation a few more times to see how consistent the model is.

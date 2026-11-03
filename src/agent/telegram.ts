@@ -2,6 +2,7 @@ import { Bot, type Context, InputFile } from 'grammy';
 import type { UserFromGetMe } from 'grammy/types';
 import type { VoiceAdapter } from '../voice/adapter.ts';
 import type { Inbound, RouterResult, StaffRouter } from './router.ts';
+import { speakable } from './speakable.ts';
 
 const TELEGRAM_MESSAGE_LIMIT = 4096;
 
@@ -42,22 +43,27 @@ export function createBot({ token, router, voice, botInfo }: BotOptions): Bot {
   /**
    * A voice note gets a spoken answer, like a call. Drafts and their commands always
    * follow as text, so staff can read exactly what would be sent and approve by typing.
+   * Ids and contact details are not read aloud; when any are left out, the whole reply
+   * follows in writing.
    */
   async function replyWithVoice(ctx: Context, speech: VoiceAdapter, result: RouterResult) {
-    const spoken = result.kind === 'agent' ? result.modelReply : result.reply;
-    const rest = result.reply.slice(spoken.length).trim();
-    if (spoken.length > MAX_SPOKEN_CHARACTERS) {
+    const words = result.kind === 'agent' ? result.modelReply : result.reply;
+    const previews = result.reply.slice(words.length).trim();
+    const spoken = speakable(words);
+    if (!spoken.text || spoken.text.length > MAX_SPOKEN_CHARACTERS) {
       await replyWithText(ctx, result.reply);
       return;
     }
     try {
-      const audio = await speech.synthesize(spoken, 'voice_note');
+      const audio = await speech.synthesize(spoken.text, 'voice_note');
       await ctx.replyWithVoice(new InputFile(audio, 'reply.ogg'));
     } catch (error) {
       console.error('Failed to speak a reply', error);
-      await replyWithText(ctx, spoken);
+      await replyWithText(ctx, result.reply);
+      return;
     }
-    if (rest) await replyWithText(ctx, rest);
+    const written = spoken.shortened ? result.reply : previews;
+    if (written) await replyWithText(ctx, written);
   }
 
   async function respond(ctx: Context, text: string, source: Inbound['source']) {

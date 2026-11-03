@@ -187,6 +187,35 @@ describe('voice notes', () => {
     expect(sent()).toEqual([preview]);
   });
 
+  it('does not read ids or phone numbers aloud, and sends the whole reply in writing', async () => {
+    const voice = new FakeVoice();
+    const words =
+      'I’ve drafted a text to Tobias Fernsworth at +1-555-0104. To send it, type APPROVE d_1.';
+    const preview = 'Draft d_1 (sms) to +1-555-0104\nNothing has been sent.';
+    const { bot, calls, sent } = setup(async () => agentResult(words, preview), voice);
+
+    await bot.handleUpdate(voiceUpdate());
+
+    expect(voice.spoken).toEqual([
+      'I’ve drafted a text to Tobias Fernsworth. The details are in the message below.',
+    ]);
+    const methods = calls.map(({ method }) => method).filter((m) => m !== 'getFile');
+    expect(methods).toEqual(['sendVoice', 'sendMessage']);
+    expect(sent()).toEqual([`${words}\n\n${preview}`]);
+  });
+
+  it('answers in text alone when nothing is left to say aloud', async () => {
+    const voice = new FakeVoice();
+    const reply = 'Name the draft, for example APPROVE d_1. Waiting: d_1.';
+    const { bot, calls, sent } = setup(async () => ({ kind: 'refused', reply }), voice);
+
+    await bot.handleUpdate(voiceUpdate());
+
+    expect(voice.spoken).toEqual([]);
+    expect(calls.map(({ method }) => method)).not.toContain('sendVoice');
+    expect(sent()).toEqual([reply]);
+  });
+
   it('speaks a refusal too, so a spoken approval is answered aloud and sends nothing', async () => {
     const voice = new FakeVoice('APPROVE d_1');
     const refusal = 'Approvals must be typed by staff in this chat.';
