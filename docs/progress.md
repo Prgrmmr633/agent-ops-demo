@@ -132,11 +132,11 @@
 ## Step 20: publishing
 
 - The working history was condensed into a short series of commits, each adding one working part of the current design and each passing lint, typecheck and its tests. The full working history is kept privately. Commits link to the owner's GitHub account through its no-reply address.
-- Pushed `main` to a private GitHub repository for review before it goes public. Verified on GitHub: only `main` is present, its latest commit matches the local one, the same files are tracked, and no private file such as `.env` was uploaded.
+- Pushed `main` to a private GitHub repository for review, then made it public on 2026-11-03 after the owner's review. Verified on GitHub: only `main` is present, its latest commit matches the local one, the same files are tracked, and no private file such as `.env` was uploaded.
 - Passed: the GitHub Actions workflow on GitHub's hosted Linux runner (install, lint, typecheck, tests and the scripted evaluation). Before pushing, the same steps also passed in a Node 26 Linux container.
 
 ## Next
 
 - Try the agent in Telegram once the Bot API answers for the bot: a draft, a casual "yes", `APPROVE`, `REJECT` and a voice note, then check the outbox.
 - Run the live evaluation a few more times to see how consistent the model is.
-- Owner tasks before going public: review the private repository and record the demo.
+- Owner task: record the demo and link it from the README.
