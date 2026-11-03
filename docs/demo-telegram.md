@@ -59,7 +59,9 @@ Then type the same command again. Comes back: "Draft ... has already been handle
 
 Hold the microphone button and speak each line clearly.
 
-**5. Say** "Tobias Fernsworth's bike is ready. Mark it for pickup."
+**5. Say** "Tobias's touring bike is ready. Mark it for pickup."
+
+Use the first name only. Speech recognition tends to hear the surname as "Farnsworth", and then the agent cannot find the customer.
 
 Comes back: a voice reply saying the bike is now marked ready.
 
