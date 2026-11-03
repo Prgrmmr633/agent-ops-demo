@@ -6,6 +6,8 @@ Staff message the agent in plain language. It looks up and updates customers thr
 
 All the data is invented. The example business is Fernhollow Cycle Works, a bike repair shop that does not exist.
 
+**[Watch the demo on YouTube](https://youtu.be/Qs_u_QKBUd8)** (5 minutes): the live agent in Telegram, with a typed chat and a voice call, and approvals typed by a person.
+
 ## What it is
 
 - An MCP data service where every customer update names its fields, checks the revision, commits atomically, is verified by a re-read and leaves a change record.

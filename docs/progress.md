@@ -149,7 +149,12 @@
 - Passed live on 2026-11-03, in a private Telegram group with "Chat" and "Call" topics: a typed question in Chat got a text answer in Chat. A voice note in Call asking to mark a bike ready got a spoken Ogg voice note back in Call, saying the bike was already ready and nothing was changed. The two topics were stored as separate conversations.
 - Checked in the databases: no new drafts, outbox messages or customer changes. No errors in any service log.
 
+## Step 23: demo recording
+
+- Recorded the Telegram demo from `docs/demo-telegram.md` and published it on YouTube: https://youtu.be/Qs_u_QKBUd8. It is linked from the README.
+- Checked in the databases after recording: both drafts were sent exactly once, to the local outbox only, and the one customer change was verified. No errors in any service log.
+- Changed: the spoken lines in the script are plainer, and the voice step uses only the customer's first name, because speech recognition misheard the surname.
+
 ## Next
 
 - Run the live evaluation a few more times to see how consistent the model is.
-- Owner task: record the demo and link it from the README.
