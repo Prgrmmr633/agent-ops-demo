@@ -146,7 +146,8 @@
 - Added: a voice note now gets a spoken reply as a Telegram voice note (Ogg Opus from ElevenLabs), and typed text still gets text. Only the agent's own words are spoken. Draft previews and their commands follow as text, and long replies or failed speech fall back to text.
 - Added: in a Telegram group with topics, replies stay in the topic the message came from, and each topic is its own conversation.
 - Passed: lint, typecheck, 315 tests, and 17 of 17 scripted scenarios (273 checks).
-- Not yet run: a real Telegram group with "Chat" and "Call" topics.
+- Passed live on 2026-11-03, in a private Telegram group with "Chat" and "Call" topics: a typed question in Chat got a text answer in Chat. A voice note in Call asking to mark a bike ready got a spoken Ogg voice note back in Call, saying the bike was already ready and nothing was changed. The two topics were stored as separate conversations.
+- Checked in the databases: no new drafts, outbox messages or customer changes. No errors in any service log.
 
 ## Next
 
