@@ -1,0 +1,65 @@
+x-app: &app
+  build: .
+  env_file:
+    - path: .env
+      required: false
+  volumes:
+    - app-data:/data
+
+services:
+  data:
+    <<: *app
+    command: ["node", "src/mcp/main.ts"]
+    environment:
+      DATA_DIR: /data
+      MCP_HOST: 0.0.0.0
+      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN:?Copy .env.example to .env first}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3001/healthz').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  worker:
+    <<: *app
+    command: ["node", "src/jobs/main.ts"]
+    environment:
+      DATA_DIR: /data
+      MCP_URL: http://data:3001
+      HEALTH_HOST: 0.0.0.0
+    ports:
+      - "127.0.0.1:3002:3002"
+    depends_on:
+      data:
+        condition: service_healthy
+
+  # Needs a Telegram bot token and an Anthropic key:
+  #   docker compose --profile telegram up
+  agent:
+    <<: *app
+    profiles: [telegram]
+    command: ["node", "src/agent/main.ts"]
+    environment:
+      DATA_DIR: /data
+      MCP_URL: http://data:3001
+    depends_on:
+      data:
+        condition: service_healthy
+
+  # Loads the fake data:
+  #   docker compose run --rm seed
+  seed:
+    <<: *app
+    profiles: [tools]
+    command: ["node", "scripts/seed.ts"]
+    environment:
+      DATA_DIR: /data
+
+volumes:
+  app-data:
