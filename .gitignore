@@ -1,0 +1,17 @@
+node_modules/
+coverage/
+/data/
+*.db
+*.db-shm
+*.db-wal
+
+# Secrets stay local
+.env
+.env.*
+!.env.example
+
+# Local working notes, never committed
+BRIEF.md
+CLAUDE.md
+HANDOFF.md
+.claude/
