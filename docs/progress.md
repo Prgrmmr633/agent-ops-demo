@@ -33,7 +33,7 @@
 - Done: hand-written tool loop, Anthropic client, scripted model, `StaffRouter`, grammY layer.
 - Tested: approvals bypassing the model, no send tool offered, and the SDK request shape checked through a stubbed `fetch`.
 - Choice: a hand-written loop instead of the SDK's beta tool runner, because evals need to swap the model and capture every tool call.
-- Real model: steps 15 to 17 cover live runs. Real Telegram: see step 15.
+- Real model: steps 15 to 17 cover live runs. Real Telegram: step 21.
 
 ## Step 5: job runner
 
@@ -102,7 +102,7 @@
 - Ran: all scenarios against Claude Sonnet 5.5 through the real store, MCP server, router and approval gate, using a key in the git-ignored `.env`. It took 101 seconds.
 - Passed: 14 of 14 live scenarios and 130 of 130 checks. The 3 scenarios that need a deliberately misbehaving scripted model were skipped by design. The report is `docs/eval-report.live.json`.
 - Limit found at this step: live checks mostly covered actions and state, not wording, and the report did not keep the replies. Step 16 fixed both.
-- Telegram: a bot was created and its token checked against the bot's ID, but Telegram's cloud Bot API returned 502 or timed out for it. This matches a Telegram-side outage affecting specific bot IDs on 2026-11-03, so the chat front end has not been tested end to end.
+- Telegram: a bot was created and its token checked against the bot's ID, but Telegram's cloud Bot API returned 502 or timed out for it. This matches a Telegram-side outage affecting specific bot IDs on 2026-11-03, so the chat front end could not be tested then. Step 21 covers it.
 
 ## Step 16: reply checks
 
@@ -135,8 +135,13 @@
 - Pushed `main` to a private GitHub repository for review, then made it public on 2026-11-03 after the owner's review. Verified on GitHub: only `main` is present, its latest commit matches the local one, the same files are tracked, and no private file such as `.env` was uploaded.
 - Passed: the GitHub Actions workflow on GitHub's hosted Linux runner (install, lint, typecheck, tests and the scripted evaluation). Before pushing, the same steps also passed in a Node 26 Linux container.
 
+## Step 21: live Telegram test
+
+- Ran: the data service, worker and Telegram agent on a Mac, with Claude Sonnet 5.5 and voice switched on. The owner's own Telegram account sent the messages to the bot.
+- Passed: a customer lookup, then a drafted email shown in full with its id. A casual "yes, send it" and a lowercase `approve` were refused with the exact command to type. The exact `APPROVE` sent once, to the local outbox, and repeating it sent nothing. A voice note was transcribed and the agent marked that customer's bike ready.
+- Checked in the databases, not just the replies: exactly one outbox message, approved by staff. The customer record moved one revision with only the requested field changed, its change record verified, and no other customer changed. No errors in any service log.
+
 ## Next
 
-- Try the agent in Telegram once the Bot API answers for the bot: a draft, a casual "yes", `APPROVE`, `REJECT` and a voice note, then check the outbox.
 - Run the live evaluation a few more times to see how consistent the model is.
 - Owner task: record the demo and link it from the README.
